@@ -1,9 +1,8 @@
-Voici le contenu formaté en fichier Markdown prêt à être enregistré :
 
-```markdown
-# Projet réalisé avec Scrapy et Selenium
 
-## Installation
+Projet réalisé avec Scrapy et Selenium
+
+Installation
 
 1. Installer les bibliothèques nécessaires :
    ```bash
