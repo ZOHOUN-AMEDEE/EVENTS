@@ -17,24 +17,20 @@ class DynamicEventsSpider(Spider):
 
     def parse(self, response):
         self.driver.get(response.url)
-
-        
-        try:
-            voir_tout_buttons = self.driver.find_elements(By.CSS_SELECTOR, '.title-section a.more')
-            for button in voir_tout_buttons:
-                button.click()
-                time.sleep(4)  
-        except Exception as e:
-            self.logger.error(f"Erreur lors du clic sur 'see all': {e}")
-
-       
         html = self.driver.page_source
         response = HtmlResponse(url=self.driver.current_url, body=html, encoding='utf-8')
 
-        # Extraire les événements
+        categories = response.css('div.categories h4.category a::attr(href)').getall()
+        for category_link in categories:
+            yield response.follow(category_link, callback=self.parse_category)
+
+    def parse_category(self, response):
+        self.driver.get(response.url)
+        html = self.driver.page_source
+        response = HtmlResponse(url=self.driver.current_url, body=html, encoding='utf-8')
+
         events = response.css('.event-card')
         for event in events:
-          
             titre = event.css('h3.event-title::text').get()
             date_affichée = event.css('.description p span::text').get()
             date_debut = event.css('meta[itemprop="startDate"]::attr(content)').get()
@@ -44,7 +40,6 @@ class DynamicEventsSpider(Spider):
             image_url = event.css('meta[itemprop="thumbnailUrl"]::attr(content)').get()
             event_link = event.css('a[itemprop="url"]::attr(href)').get()
 
-            # Suivre le lien pour les détails supplémentaires
             if event_link:
                 yield response.follow(event_link, callback=self.parse_event_details, meta={
                     'titre': titre,
@@ -62,10 +57,9 @@ class DynamicEventsSpider(Spider):
 
         categorie = response.css('ol.flex-center li.breadcrumb-item:nth-child(3) span[itemprop="name"]::text').get()
 
-        price_text = response.css('td.availability p.price::text').get() or response.css('div.tariff-container p.text-right::text').get()
-        prix = price_text.strip() if price_text != "N/A" else "N/A"
+        elements = response.css("div.text-2.tariff-container p::text, div.text-2.tariff-container span::text, div p::text, div span::text").getall()
+        prix = next((p.strip() for p in elements if 'CHF' in p), None)
 
-        
         yield {
             'titre': meta_data['titre'],
             'date_affichée': meta_data['date_affichée'],
