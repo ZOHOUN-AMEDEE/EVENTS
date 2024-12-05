@@ -2,8 +2,8 @@ from scrapy import Spider
 from scrapy.http import HtmlResponse
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-import time
+import re
+
 
 
 class DynamicEventsSpider(Spider):
@@ -57,10 +57,16 @@ class DynamicEventsSpider(Spider):
 
         categorie = response.css('ol.flex-center li.breadcrumb-item:nth-child(3) span[itemprop="name"]::text').get()
 
-        elements = response.css("div.text-2.tariff-container p::text, div.text-2.tariff-container span::text, div p::text, div span::text").getall()
-        prix = next((p.strip() for p in elements if 'CHF' in p), None)
+        description_text = ' '.join(response.css('div.text-2.tariff-container p::text, div.text-2.tariff-container span::text, div p::text, div span::text').getall())
 
+        price_pattern = r'(\d+)\s*CHF'
+        prices = re.findall(price_pattern, description_text)
+
+        prix = f"{prices[0]} CHF" if prices else None
+
+      
         yield {
+            'prix': prix,
             'titre': meta_data['titre'],
             'date_affichée': meta_data['date_affichée'],
             'date_debut': meta_data['date_debut'],
@@ -70,8 +76,5 @@ class DynamicEventsSpider(Spider):
             'image_url': meta_data['image_url'],
             'event_link': meta_data['event_link'],
             'categorie': categorie,
-            'prix': prix,
+            
         }
-
-    def closed(self, reason):
-        self.driver.quit()
