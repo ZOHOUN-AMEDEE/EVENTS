@@ -95,4 +95,23 @@ FEED_EXPORT_ENCODING = "utf-8"
 
 DOWNLOADER_MIDDLEWARES = {
     'infomaniak_events.middlewares.SeleniumMiddleware': 543,
+    'scrapy_selenium.SeleniumMiddleware': 800
 }
+
+custom_settings = {
+    'DEFAULT_REQUEST_HEADERS': {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': 'application/json',
+    }
+}
+
+from selenium.webdriver import ChromeOptions
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+
+chrome_options = ChromeOptions()
+chrome_options.add_argument("--headless")  
+chrome_options.add_argument("--disable-gpu")
+chrome_options.add_argument("--no-sandbox")
+
+capabilities = DesiredCapabilities.CHROME
+capabilities["goog:loggingPrefs"] = {"performance": "ALL"}
